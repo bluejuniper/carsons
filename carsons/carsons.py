@@ -336,12 +336,12 @@ class ConcentricNeutralCarsonsEquations(ModifiedCarsonsEquations):
             
             return 77.3619j/np.log(Rb/RDi) # Siemens/mile
 
-        k = cable['n_strands']
-
-        strand = cable['strand']
+        k = self.neutral_strand_count[phase]
 
         # diameter of neutral strands in in.
         # this is D_strand in underground_line()
+        GMR_s = self.neutral_strand_gmr[phase]
+
         D_strand = strand['D']
         RDs = strand['D']/24
     
