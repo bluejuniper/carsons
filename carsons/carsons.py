@@ -310,6 +310,71 @@ class ConcentricNeutralCarsonsEquations(ModifiedCarsonsEquations):
         return (GMR_s * k * R**(k-1))**(1/k)
 
 
+    def build_Y(self) -> ndarray:
+        dimension = len(self.conductors)
+        Y = zeros(shape=(dimension, dimension), dtype=complex)
+
+        for index_i, phase_i in enumerate(self.conductors):
+            if phase_i not in self.phases:
+                continue
+
+            Y[index_i, index_i] = self.compute_y(phase_i, phase_j)
+
+        return Y       
+
+    def underground_line_shunt(self, i):
+        cable = line['cable']
+        has_concentric_neutral = False 
+        core = cable['core']
+
+        
+        if cable['neutral_type'].lower() == 'concentric':
+            has_concentric_neutral = True
+        
+        phasing = 'abcn'
+        
+        if phasing in line:
+            phasing = line['phasing'].lower()
+            
+        phases = phasing.replace('n','')
+        
+        Yij = np.zeros((3,3), dtype=complex)
+
+        for i,pi in enumerate('abc'):
+            if pi in phases:
+                RDi = core['D']/24 # radius of the center conductor in ft
+                logging.debug(f'Radius of central conductor: RDi = {RDi:0.6f} ft')                
+
+                D_outer = cable['D_outer']
+
+                if has_concentric_neutral:
+                    k = cable['n_strands']
+        
+                    strand = cable['strand']
+
+                    # diameter of neutral strands in in.
+                    # this is D_strand in underground_line()
+                    D_strand = strand['D']
+                    RDs = strand['D']/24
+                
+                    # distance from cable center to neutral strand centers
+                    # this is R_strand in underground_line()
+                    Rb = (D_outer - strand['D'])/24 
+                    
+                    logging.debug(f'Radius of circle passing through strands: Rb = {Rb:0.6f} ft')
+                    logging.debug(f'Radius of strands: RDi = {RDs:0.6f} ft')                                
+                
+                    Yij[i,i] = 77.3619j/(np.log(Rb/RDi) - np.log(k*RDs/Rb)/k) # Siemens/mile
+                else:
+                    T = cable['tape_thickness']                
+                    Rb = (D_outer/2 - T/2000)/12
+                    logging.debug(f'Radius of circle passing through tape: Rb = {Rb:0.6f} ft')
+                    
+                    Yij[i,i] = 77.3619j/np.log(Rb/RDi) # Siemens/mile
+                    
+        return Yij
+
+
 class MultiConductorCarsonsEquations(ModifiedCarsonsEquations):
     def __init__(self, model):
         super().__init__(model)
