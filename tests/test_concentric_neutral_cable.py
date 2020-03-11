@@ -1,10 +1,10 @@
 import pint
-from numpy import array
+from numpy import array, eye
 from numpy.testing import assert_array_almost_equal
 
-from carsons import ConcentricNeutralCarsonsEquations, calculate_impedance
+from carsons import ConcentricNeutralCarsonsEquations, calculate_impedance, calculate_shunt_impedance
 from tests.helpers import ConcentricLineModel
-from tests.test_overhead_line import OHM_PER_MILE_TO_OHM_PER_METER
+from tests.test_overhead_line import OHM_PER_MILE_TO_OHM_PER_METER, S_PER_MILE_TO_S_PER_METER
 
 ureg = pint.UnitRegistry()
 
@@ -24,21 +24,21 @@ def test_concentric_neutral_cable():
             'resistance': (0.4100*(ohms / miles)).to('ohm / meters').magnitude,
             'gmr': (0.0171*feet).to('meters').magnitude,
             'diameter': (0.567*inches).to('meters').magnitude,
-            'insulation_reletive_permittivity': 3.0,
+            'insulation_relative_permittivity': 2.3,
             'wire_positions': (0, 0)
         },
         "B": {
             'resistance': (0.4100*(ohms / miles)).to('ohm / meters').magnitude,
             'gmr': (0.0171*feet).to('meters').magnitude,
             'diameter': (0.567*inches).to('meters').magnitude,            
-            'insulation_reletive_permittivity': 3.0,            
+            'insulation_relative_permittivity': 2.3,            
             'wire_positions': ((6*inches).to('meters').magnitude, 0)
         },
         "C": {
             'resistance': (0.4100*(ohms / miles)).to('ohm / meters').magnitude,
             'gmr': (0.0171*feet).to('meters').magnitude,
             'diameter': (0.567*inches).to('meters').magnitude,            
-            'insulation_reletive_permittivity': 3.0,            
+            'insulation_relative_permittivity': 2.3,            
             'wire_positions': ((12*inches).to('meters').magnitude, 0)
         },
 
@@ -77,6 +77,12 @@ def test_concentric_neutral_cable():
 
         ]) * OHM_PER_MILE_TO_OHM_PER_METER,
         decimal=4
+    )
+
+    assert_array_almost_equal(
+        calculate_shunt_impedance(model),
+        eye(3)*96.6098e-6j * S_PER_MILE_TO_S_PER_METER,
+        decimal=9
     )
 
 

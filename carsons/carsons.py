@@ -37,6 +37,14 @@ def calculate_impedance(model) -> ndarray:
 
     return z_abc
 
+def calculate_shunt_impedance(model) -> ndarray: 
+    dimension = model.dimension
+    y_primitive = model.build_Y()
+    y_abc = y_primitive[0:dimension, 0:dimension]
+
+    print(y_abc)
+    return y_abc
+
 
 def perform_kron_reduction(z_primitive: ndarray, dimension=3) -> ndarray:
     """ Reduces the primitive impedance matrix to an equivalent impedance
@@ -259,16 +267,8 @@ class ConcentricNeutralCarsonsEquations(ModifiedCarsonsEquations):
 
     def __init__(self, model, *args, **kwargs):
         super().__init__(model)
-
-        if hasattr(model, 'diameter'):
-            self.core_diameter: Dict[str, float] = model.diameter
-        else:
-            self.core_diameter: {}
-
-        if hasattr(model, 'insulation_relative_permittivity'):
-            self.insulation_relative_permittivity: Dict[str, float] = model.insulation_relative_permittivity
-        else:
-            self.insulation_relative_permittivity: {}
+        self.core_diameter: Dict[str, float] = model.core_diameter
+        self.insulation_relative_permittivity: Dict[str, float] = model.insulation_relative_permittivity
         self.neutral_strand_gmr: Dict[str, float] = model.neutral_strand_gmr
         self.neutral_strand_diameter: Dict[str, float] = model.neutral_strand_diameter
         self.diameter_over_neutral: Dict[str, float] = model.diameter_over_neutral
@@ -338,53 +338,44 @@ class ConcentricNeutralCarsonsEquations(ModifiedCarsonsEquations):
             if phase_i not in self.phases:
                 continue
 
-            C = self.compute_C(phase_i, phase_j)
-            Y[index_i, index_i] = 1/(1j*self.ω*C)
+            if phase_i.startswith('N'):
+                C = 0
+            else:
+                C = self.compute_C(phase_i)
+            
+            print(f'C[{phase_i}] = {C}')
+            Y[index_i, index_i] = 1j*self.ω*C
 
+        # print(Y)
         return Y       
 
-    # "C": {
-    #     'resistance': (0.4100*(ohms / miles)).to('ohm / meters').magnitude,
-    #     'gmr': (0.0171*feet).to('meters').magnitude,
-    #     'diameter': (0.567*inches).to('meters').magnitude,            
-    #     'wire_positions': ((12*inches).to('meters').magnitude, 0)
-    # },
-
-    # "NA": {
-    #     'neutral_strand_gmr': (0.00208*feet).to('meters').magnitude,
-    #     'neutral_strand_resistance':
-    #         (14.87*ohms / miles).to('ohm / meters').magnitude,
-    #     'neutral_strand_diameter': (0.0641*inches).to('meters').magnitude,
-    #     'diameter_over_neutral': (1.29*inches).to('meters').magnitude,
-    #     'neutral_strand_count': 13,
-    # },        
 
     def compute_C(self, phase):
         RDi = self.core_diameter[phase]/2 # radius of the center conductor in ft
-        logging.debug(f'Radius of central conductor: RDi = {RDi:0.6f} m')                
 
         # enable this when tape shielding gets merged in
         if False and self.tape_thickness:
-            D_outer = self.diameter_over_neutral[phase]
+            D_outer = self.diameter_over_neutral[f'N{phase}']
             T = self.tape_thickness[phase]
             Rb = (D_outer/2 - T/2)
-            logging.debug(f'Radius of circle passing through tape: Rb = {Rb:0.6f} m')
             
-            return 2*π*epsilon/np.log(Rb/RDi) # Siemens/mile with feet input
+            return 2*π*epsilon/log(Rb/RDi) # Siemens/mile with feet input
 
-        k = self.neutral_strand_count[phase]
+        k = self.neutral_strand_count[f'N{phase}']
 
         # diameter of neutral strands in in.
         # this is D_strand in underground_line()
-        RDs = self.neutral_strand_diameter[phase]/2 
+        RDs = self.neutral_strand_diameter[f'N{phase}']/2 
     
         # distance from cable center to neutral strand centers
         # this is R_strand in underground_line()
-        Rb = self.radius[phase]
-                                  
-        epsilon_r = insulation_relative_permittivity # TODO: add this is a parameter 
+        Rb = self.radius[f'N{phase}']
+
+        print( self.insulation_relative_permittivity)
+        epsilon_r = self.insulation_relative_permittivity[phase] # TODO: add this is a parameter 
         epsilon = epsilon_0*epsilon_r
-        return 2*π*epsilon/(np.log(Rb/RDi) - np.log(k*RDs/Rb)/k) # Siemens/mile
+
+        return 2*π*epsilon/(log(Rb/RDi) - log(k*RDs/Rb)/k) # C/m
 
 
                     
