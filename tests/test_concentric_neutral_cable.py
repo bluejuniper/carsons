@@ -23,16 +23,22 @@ def test_concentric_neutral_cable():
         "A": {
             'resistance': (0.4100*(ohms / miles)).to('ohm / meters').magnitude,
             'gmr': (0.0171*feet).to('meters').magnitude,
+            'diameter': (0.567*inches).to('meters').magnitude,
+            'insulation_reletive_permittivity': 3.0,
             'wire_positions': (0, 0)
         },
         "B": {
             'resistance': (0.4100*(ohms / miles)).to('ohm / meters').magnitude,
             'gmr': (0.0171*feet).to('meters').magnitude,
+            'diameter': (0.567*inches).to('meters').magnitude,            
+            'insulation_reletive_permittivity': 3.0,            
             'wire_positions': ((6*inches).to('meters').magnitude, 0)
         },
         "C": {
             'resistance': (0.4100*(ohms / miles)).to('ohm / meters').magnitude,
             'gmr': (0.0171*feet).to('meters').magnitude,
+            'diameter': (0.567*inches).to('meters').magnitude,            
+            'insulation_reletive_permittivity': 3.0,            
             'wire_positions': ((12*inches).to('meters').magnitude, 0)
         },
 
