@@ -2,10 +2,24 @@ from collections import defaultdict
 from itertools import islice
 from typing import Dict, Iterable, Iterator, Tuple
 
-from numpy import arctan, cos, log, sin, sqrt, zeros
-from numpy import ndarray
+from numpy import arctan, cos, log, sin, sqrt, zeros, exp
+from numpy import array, ndarray
 from numpy import pi as π
 from numpy.linalg import inv
+
+alpha = exp(2j*π/3)
+
+A = array([
+            [1, 1, 1],
+            [1, alpha**2, alpha],
+            [1, alpha, alpha**2],
+])
+
+Ainv = (1/3)*array([
+                [1, 1, 1],
+                [1, alpha, alpha**2],
+                [1, alpha**2, alpha],
+])
 
 
 def convert_geometric_model(geometric_model) -> ndarray:
@@ -65,22 +79,13 @@ def perform_kron_reduction(z_primitive: ndarray, dimension=3) -> ndarray:
     return Z_abc
 
 
-def calculate_self_impedance(Z):
-    return (Z[0, 0] + Z[1, 1] + Z[2, 2])/3
-
-
-def calculate_mutual_impedance(Z):
-    return (Z[0, 1] + Z[1, 2] + Z[0, 2])/3
+def calculate_sequence_impedance_matrix(Z):
+    return Ainv @ Z @ A
 
 
 def calculate_sequence_impedances(Z):
-    zs = calculate_self_impedance(Z)
-    zm = calculate_mutual_impedance(Z)
-
-    z0 = zs + 2*zm
-    z1 = zs - zm
-
-    return z1, z0
+    Z012 = calculate_sequence_impedance_matrix(Z)
+    return Z012[1, 1], Z012[0, 0]
 
 
 class CarsonsEquations():
@@ -194,10 +199,6 @@ class CarsonsEquations():
         xⱼ, yⱼ = self.phase_positions[j]
 
         return self.calculate_distance(self.phase_positions[i], (xⱼ, -yⱼ))
-
-    def compute_C(self, i, j) -> float:
-        xᵢ, yᵢ = self.phase_positions[i]
-        xⱼ, yⱼ = self.phase_positions[j]
 
     @staticmethod
     def calculate_distance(positionᵢ, positionⱼ) -> float:

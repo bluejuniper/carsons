@@ -4,6 +4,7 @@ from numpy import array
 from carsons.carsons import (
     CarsonsEquations,
     perform_kron_reduction,
+    calculate_sequence_impedance_matrix,
     calculate_sequence_impedances,
 )
 from tests.test_overhead_line import (
@@ -137,18 +138,29 @@ def expected_z_abc_three_neutrals():
                 [-14 + 0j, -14 + 0j, -13 + 0j]])
 
 
-def z_abc_kersting_4_3():
+def z_abc_kersting_4_1():
+    """Kron-reduced impedance matrix from Kersting 3rd Ed., ex. 4.1"""
     return array([
                 [0.4576+1.078j, 0.1560+0.5017j, 0.1535+0.3849j],
                 [0.1560+0.5017j, 0.4666+1.*1.0482j, 0.1580+0.4236j],
                 [0.1535+0.3849j, 0.1580+0.4236j, 0.4615+1.0651j]])
 
 
-def z_1_kersting_4_3():
+def z_012_kersting_4_1():
+    """Sequence impedance matrix from Kersting 3rd Ed., ex. 4.1"""
+    return array([
+                [0.7735+1.9373j, 0.0256+0.0115j, -0.0321+0.0159j],
+                [-0.0321+0.0159j, 0.3061+0.6270j, -0.0723-0.0060j],
+                [0.0256+0.0115j, 0.0723-0.0059j, 0.3061+0.6270j]])
+
+
+def z_1_kersting_4_1():
+    """Positive-sequence impedance from Kersting 3rd Ed., ex. 4.1"""
     return 0.3061 + 0.6270j
 
 
-def z_0_kersting_4_3():
+def z_0_kersting_4_1():
+    """Zero-sequence impedance from Kersting 3rd Ed., ex. 4.1"""
     return 0.7735 + 1.9373j
 
 
@@ -188,8 +200,16 @@ def test_kron_reduction(z_primitive, expected_z_abc):
 
 
 @pytest.mark.parametrize(
+    "z_abc,z_012_expected",
+    [(z_abc_kersting_4_1(), z_012_kersting_4_1())])
+def test_sequence_impedance_matrix(z_abc, z_012_expected):
+    z_012_computed = calculate_sequence_impedance_matrix(z_abc)
+    assert_array_almost_equal(z_012_expected, z_012_computed, decimal=0.001)
+
+
+@pytest.mark.parametrize(
     "z_abc,expected_z1,expected_z0",
-    [(z_abc_kersting_4_3(), z_1_kersting_4_3(), z_0_kersting_4_3())])
+    [(z_abc_kersting_4_1(), z_1_kersting_4_1(), z_0_kersting_4_1())])
 def test_sequence_impedance(z_abc, expected_z1, expected_z0):
     actual_z1, actual_z0 = calculate_sequence_impedances(z_abc)
     assert actual_z1.real == pytest.approx(expected_z1.real, 0.001)
