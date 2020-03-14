@@ -97,6 +97,17 @@ def calculate_sequence_impedances(Z):
     return Z012[1, 1], Z012[0, 0]
 
 
+def calculate_per_unit_impedances(Z, kV, MVA):
+"""
+Convert impedances to per-unit as required by some 
+software and file formats for trasmission system modeling.
+Not much here, but I still always manage to forget 
+the formula...
+"""
+    z_base = kV**2/MVA
+    return Z/z_base
+
+
 class CarsonsEquations():
 
     ρ = 100  # resistivity, ohms/meter^3
@@ -236,6 +247,54 @@ class CarsonsEquations():
         ])
 
         return ["A", "B", "C"] + neutral_conductors
+
+    def build_Y(self) -> ndarray:
+        dimension = len(self.conductors)
+        Y = zeros(shape=(dimension, dimension), dtype=complex)
+
+        for index_i, phase_i in enumerate(self.conductors):
+            if phase_i not in self.phases:
+                continue
+
+            if phase_i.startswith('N'):
+                C = 0
+            else:
+                C = self.compute_C(phase_i)
+            
+            print(f'C[{phase_i}] = {C}')
+            Y[index_i, index_i] = 1j*self.ω*C
+
+        # print(Y)
+        return Y       
+
+
+    def compute_C(self, phase):
+        RDi = self.core_diameter[phase]/2 # radius of the center conductor in ft
+
+        # enable this when tape shielding gets merged in
+        if False and self.tape_thickness:
+            D_outer = self.diameter_over_neutral[f'N{phase}']
+            T = self.tape_thickness[phase]
+            Rb = (D_outer/2 - T/2)
+            
+            return 2*π*epsilon/log(Rb/RDi) # Siemens/mile with feet input
+
+        k = self.neutral_strand_count[f'N{phase}']
+
+        # diameter of neutral strands in in.
+        # this is D_strand in underground_line()
+        RDs = self.neutral_strand_diameter[f'N{phase}']/2 
+    
+        # distance from cable center to neutral strand centers
+        # this is R_strand in underground_line()
+        Rb = self.radius[f'N{phase}']
+
+        print( self.insulation_relative_permittivity)
+        epsilon_r = self.insulation_relative_permittivity[phase] # TODO: add this is a parameter 
+        epsilon = epsilon_0*epsilon_r
+
+        return 2*π*epsilon/(log(Rb/RDi) - log(k*RDs/Rb)/k) # C/m
+
 
 
 class ModifiedCarsonsEquations(CarsonsEquations):
