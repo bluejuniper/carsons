@@ -295,6 +295,53 @@ class CarsonsEquations():
 
         return 2*π*epsilon/(log(Rb/RDi) - log(k*RDs/Rb)/k) # C/m
 
+        #########
+        phasing = 'abcn'
+        
+        if phasing in line:
+            phasing = line['phasing'].lower()
+            
+        phasing = line['phasing'].lower()
+        phases = phasing.replace('n', '')
+        
+        phase = line['phase']
+        D = line['spacings']
+    
+        Pij = np.zeros((3,3), dtype=complex)
+        
+        for i,pi in enumerate('abc'):
+            for j,pj in enumerate('abc'):
+                if i == j and pi in phases:
+                    Sii = 2*D[pi][1]
+                    Pij[i,i] = calc_ps(Sii, phase['D']/12)
+                elif pi in D and pj in D:
+                    xi, yi = D[pi]
+                    xj, yj = D[pj]
+                    
+                    Dij = np.sqrt((xi - xj)**2 + (yi - yj)**2)
+                    Sij = np.sqrt((xi - xj)**2 + (yi + yj)**2)
+                    Pij[i,j] = calc_pm(Sij, Dij)
+
+        if 'neutral' not in line:
+            return Pij, None, None
+
+        Pin = np.zeros((3,1), dtype=complex)
+        xn, yn = D['n']
+
+        for i,pi in enumerate('abc'):
+            if pi in D:
+                xi, xj = D[pi]
+                
+                Din = np.sqrt((xi - xn)**2 + (yi - yn)**2)
+                Sin = np.sqrt((xi - xn)**2 + (yi + yn)**2)
+                Pin[i,0] = calc_pm(Sin, Din)
+
+        neutral = line['neutral']    
+        Snn = 2*yn
+        pnn = calc_ps(Snn, neutral['D']/12)  
+        return Pij, Pin, pnn
+
+
 
 
 class ModifiedCarsonsEquations(CarsonsEquations):
