@@ -37,11 +37,15 @@ def calculate_impedance(model) -> ndarray:
 
     return z_abc
 
+# Do I need another version of this fo concentric cables?
 def calculate_shunt_impedance(model) -> ndarray: 
     dimension = model.dimension
-    y_primitive = model.build_Y()
-    y_abc = y_primitive[0:dimension, 0:dimension]
+    p_primitive = model.build_shunt_P()
+    p_abc = kron(p_primitive)
+    c_abc = inv(p_abc)
 
+    f = model.f
+    y_abc =  2j * π * f * c_abc
     print(y_abc)
     return y_abc
 
@@ -108,6 +112,12 @@ the formula...
     return Z/z_base
 
 
+
+
+
+
+
+
 class CarsonsEquations():
 
     ρ = 100  # resistivity, ohms/meter^3
@@ -119,11 +129,9 @@ class CarsonsEquations():
             model.wire_positions
         self.gmr: Dict[str, float] = model.geometric_mean_radius
         self.r: Dict[str, float] = model.resistance
-
-        if hasattr(model, 'outside_radius'):
-            self.outside_radius: Dict[str, float] = model.outside_radius
-        else:
-            self.outside_radius: {}
+        # use wire_diameter or core_diameter?
+        # core_diameter seems more clear for jacketed conductors
+        self.core_diameter: Dict[str, float] = model.core_diameter
 
         self.ƒ = getattr(model, 'frequency', 60)
         self.ω = 2.0 * π * self.ƒ  # angular frequency radians / second
@@ -220,6 +228,12 @@ class CarsonsEquations():
             self.phase_positions[j],
         )
 
+    def compute_image_d(self, i, j) -> float:
+        return self.calculate_image_distance(
+            self.phase_positions[i],
+            self.phase_positions[j],
+        )
+
     def compute_D(self, i, j) -> float:
         xⱼ, yⱼ = self.phase_positions[j]
 
@@ -230,6 +244,13 @@ class CarsonsEquations():
         xᵢ, yᵢ = positionᵢ
         xⱼ, yⱼ = positionⱼ
         return sqrt((xᵢ - xⱼ)**2 + (yᵢ - yⱼ)**2)
+
+    @staticmethod
+    def calculate_image_distance(positionᵢ, positionⱼ) -> float:
+        xᵢ, yᵢ = positionᵢ
+        xⱼ, yⱼ = positionⱼ
+        return sqrt((xᵢ - xⱼ)**2 + (yᵢ + yⱼ)**2)
+
 
     def get_h(self, i):
         _, yᵢ = self.phase_positions[i]
@@ -248,98 +269,36 @@ class CarsonsEquations():
 
         return ["A", "B", "C"] + neutral_conductors
 
-    def build_Y(self) -> ndarray:
+    # capacitance = lambda Pij: np.linalg.inv(Pij)
+
+
+    # def shunt_admittance(Cij, f=60):
+    #     return np.pi*f*Cij
+
+    def build_P(self) -> ndarray:
         dimension = len(self.conductors)
-        Y = zeros(shape=(dimension, dimension), dtype=complex)
+        p_primitive = zeros(shape=(dimension, dimension), dtype=complex)
 
         for index_i, phase_i in enumerate(self.conductors):
-            if phase_i not in self.phases:
-                continue
+            for index_j, phase_j in enumerate(self.conductors):
+                if phase_i not in self.phases or phase_j not in self.phases:
+                    continue
 
-            if phase_i.startswith('N'):
-                C = 0
-            else:
-                C = self.compute_C(phase_i)
-            
-            print(f'C[{phase_i}] = {C}')
-            Y[index_i, index_i] = 1j*self.ω*C
+                P = self.compute_shunt_P(phase_i, phase_j)
+                p_primitive[index_i, index_j] = P
 
-        # print(Y)
-        return Y       
+        return p_primitive
 
 
-    def compute_C(self, phase):
-        RDi = self.core_diameter[phase]/2 # radius of the center conductor in ft
-
-        # enable this when tape shielding gets merged in
-        if False and self.tape_thickness:
-            D_outer = self.diameter_over_neutral[f'N{phase}']
-            T = self.tape_thickness[phase]
-            Rb = (D_outer/2 - T/2)
-            
-            return 2*π*epsilon/log(Rb/RDi) # Siemens/mile with feet input
-
-        k = self.neutral_strand_count[f'N{phase}']
-
-        # diameter of neutral strands in in.
-        # this is D_strand in underground_line()
-        RDs = self.neutral_strand_diameter[f'N{phase}']/2 
-    
-        # distance from cable center to neutral strand centers
-        # this is R_strand in underground_line()
-        Rb = self.radius[f'N{phase}']
-
-        print( self.insulation_relative_permittivity)
-        epsilon_r = self.insulation_relative_permittivity[phase] # TODO: add this is a parameter 
-        epsilon = epsilon_0*epsilon_r
-
-        return 2*π*epsilon/(log(Rb/RDi) - log(k*RDs/Rb)/k) # C/m
-
-        #########
-        phasing = 'abcn'
+    def compute_shunt_P(self, i, j):
+        if i == j:
+            Sii = 2 * self.get_h(i)
+            Dii = self.core_diameter[i]
+            return calc_ps(Sii, Dii)
         
-        if phasing in line:
-            phasing = line['phasing'].lower()
-            
-        phasing = line['phasing'].lower()
-        phases = phasing.replace('n', '')
-        
-        phase = line['phase']
-        D = line['spacings']
-    
-        Pij = np.zeros((3,3), dtype=complex)
-        
-        for i,pi in enumerate('abc'):
-            for j,pj in enumerate('abc'):
-                if i == j and pi in phases:
-                    Sii = 2*D[pi][1]
-                    Pij[i,i] = calc_ps(Sii, phase['D']/12)
-                elif pi in D and pj in D:
-                    xi, yi = D[pi]
-                    xj, yj = D[pj]
-                    
-                    Dij = np.sqrt((xi - xj)**2 + (yi - yj)**2)
-                    Sij = np.sqrt((xi - xj)**2 + (yi + yj)**2)
-                    Pij[i,j] = calc_pm(Sij, Dij)
-
-        if 'neutral' not in line:
-            return Pij, None, None
-
-        Pin = np.zeros((3,1), dtype=complex)
-        xn, yn = D['n']
-
-        for i,pi in enumerate('abc'):
-            if pi in D:
-                xi, xj = D[pi]
-                
-                Din = np.sqrt((xi - xn)**2 + (yi - yn)**2)
-                Sin = np.sqrt((xi - xn)**2 + (yi + yn)**2)
-                Pin[i,0] = calc_pm(Sin, Din)
-
-        neutral = line['neutral']    
-        Snn = 2*yn
-        pnn = calc_ps(Snn, neutral['D']/12)  
-        return Pij, Pin, pnn
+        Sij = self.calculate_image_d(i, j)
+        Dij = 2 * self.get_h(i)
+        return calc_pm(Sij, Dij)
 
 
 
