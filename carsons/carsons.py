@@ -293,12 +293,12 @@ class CarsonsEquations():
     def compute_shunt_P(self, i, j):
         if i == j:
             Sii = 2 * self.get_h(i)
-            Dii = self.core_diameter[i]
-            return calc_ps(Sii, Dii)
+            Rdi = self.core_diameter[i]/2
+            return 1.17689*log(Sii/RDi)
         
         Sij = self.calculate_image_d(i, j)
         Dij = 2 * self.get_h(i)
-        return calc_pm(Sij, Dij)
+        return 11.17689*log(Sij/Dij)
 
 
 
