@@ -154,16 +154,6 @@ def z_012_kersting_4_1():
                 [0.0256+0.0115j, 0.0723-0.0059j, 0.3061+0.6270j]])
 
 
-def z_1_kersting_4_1():
-    """Positive-sequence impedance from Kersting 3rd Ed., ex. 4.1"""
-    return 0.3061 + 0.6270j
-
-
-def z_0_kersting_4_1():
-    """Zero-sequence impedance from Kersting 3rd Ed., ex. 4.1"""
-    return 0.7735 + 1.9373j
-
-
 @pytest.mark.parametrize(
     "line,z_primitive_expected",
     [(ACBN_geometry_line(), ACBN_line_z_primitive()),
@@ -207,12 +197,13 @@ def test_sequence_impedance_matrix(z_abc, z_012_expected):
     assert_array_almost_equal(z_012_expected, z_012_computed, decimal=0.001)
 
 
-@pytest.mark.parametrize(
-    "z_abc,expected_z1,expected_z0",
-    [(z_abc_kersting_4_1(), z_1_kersting_4_1(), z_0_kersting_4_1())])
-def test_sequence_impedance(z_abc, expected_z1, expected_z0):
+def test_sequence_impedance():
+    """
+    Validation test against Kersting 3rd Ed., ex. 4.1
+    """ 
+    z_abc = z_abc_kersting_4_1()
     actual_z1, actual_z0 = calculate_sequence_impedances(z_abc)
-    assert actual_z1.real == pytest.approx(expected_z1.real, 0.001)
-    assert actual_z1.imag == pytest.approx(expected_z1.imag, 0.001)
-    assert actual_z0.real == pytest.approx(expected_z0.real, 0.001)
-    assert actual_z0.imag == pytest.approx(expected_z0.imag, 0.001)
+    assert actual_z1.real == pytest.approx(0.3061, 0.001)
+    assert actual_z1.imag == pytest.approx(0.6270, 0.001)
+    assert actual_z0.real == pytest.approx(0.7735 , 0.001)
+    assert actual_z0.imag == pytest.approx(1.9373, 0.001)
