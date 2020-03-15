@@ -85,7 +85,18 @@ def calculate_sequence_impedance_matrix(Z):
 
 def calculate_sequence_impedances(Z):
     Z012 = calculate_sequence_impedance_matrix(Z)
-    return Z012[1, 1], Z012[0, 0]
+    return array([Z012[1, 1], Z012[0, 0]])
+
+
+def calculate_per_unit_impedances(Z, kV, MVA):
+    """
+    Convert impedances to per-unit as required by some 
+    software and file formats for trasmission system modeling.
+    Not much here, but I still always manage to forget 
+    the formula...
+    """
+    z_base = kV**2/MVA
+    return Z/z_base
 
 
 class CarsonsEquations():
