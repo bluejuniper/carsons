@@ -1,6 +1,7 @@
 from carsons.carsons import (convert_geometric_model,               # noqa 401
                              calculate_impedance,                   # noqa 401
                              calculate_shunt_impedance,
+                             calculate_concentric_shunt_impedance,
                              calculate_sequence_impedance_matrix,
                              calculate_sequence_impedances,
                              CarsonsEquations,

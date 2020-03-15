@@ -1,7 +1,7 @@
 import pytest
 from numpy.testing import assert_array_almost_equal
 from numpy import array
-from carsons.carsons import convert_geometric_model
+from carsons.carsons import convert_geometric_model, convert_geometric_model_to_shunt
 
 # `carsons` implements the model entirely in SI metric units, however this
 # conversion allows us to enter in impedance as ohm-per-mile in the test
@@ -13,11 +13,13 @@ OHM_PER_KILOMETER_TO_OHM_PER_METER = 1 / 1_000
 
 
 class ACBN_geometry_line():
-    """ IEEE 13 Configuration 601 Line Geometry """
+    """
+    IEEE 13 Configuration 601 Line Geometry
+    556,500 26/7 ACSR Phase, 4/0 6/1 ACSR Neutral
+    """
 
     def __init__(self, ƒ=60):
         self.frequency = ƒ
-        self.outside_radius = {}
 
     @property
     def resistance(self):
@@ -35,6 +37,15 @@ class ACBN_geometry_line():
             'C': 0.00947938,
             'B': 0.00947938,
             'N': 0.00248107,
+        }
+
+    @property
+    def outside_radius(self):
+        return {
+            'A': 0.0235458,
+            'C': 0.0235458,
+            'B': 0.0235458,
+            'N': 0.0143002,
         }
 
     @property
@@ -62,6 +73,14 @@ def ACBN_line_phase_impedance_60Hz():
             [0.3465 + 1.0179j, 0.1560 + 0.5017j, 0.1580 + 0.4236j],
             [0.1560 + 0.5017j, 0.3375 + 1.0478j, 0.1535 + 0.3849j],
             [0.1580 + 0.4236j, 0.1535 + 0.3849j, 0.3414 + 1.0348j]])
+
+
+def ACBN_line_shunt_impedance_60Hz():
+    """ IEEE 13 Configuration 601 Shunt Impedance Solution At 60Hz """
+    return 1j * S_PER_MILE_TO_S_PER_METER * array([
+            [6.2998,  -1.9958, -1.2595],
+            [-1.9958,  5.9597, -0.7417],
+            [-1.2595, -0.7417,  5.6386]])
 
 
 def ACBN_line_phase_impedance_50Hz():
@@ -193,3 +212,13 @@ def test_converts_geometry_to_phase_impedance(
     actual_impedance = convert_geometric_model(line(ƒ=frequency))
     assert_array_almost_equal(expected_impedance,
                               actual_impedance)
+
+
+# def test_converts_geometry_to_shunt_impedance():
+#     model = ACBN_geometry_line()
+
+#     assert_array_almost_equal(
+#         convert_geometric_model_to_shunt(model),
+#         ACBN_line_shunt_impedance_60Hz(),
+#         decimal=9
+#     )

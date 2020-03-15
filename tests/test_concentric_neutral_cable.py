@@ -2,7 +2,7 @@ import pint
 from numpy import array, eye
 from numpy.testing import assert_array_almost_equal
 
-from carsons import ConcentricNeutralCarsonsEquations, calculate_impedance, calculate_shunt_impedance
+from carsons import ConcentricNeutralCarsonsEquations, calculate_impedance, calculate_concentric_shunt_impedance
 from tests.helpers import ConcentricLineModel
 from tests.test_overhead_line import OHM_PER_MILE_TO_OHM_PER_METER, S_PER_MILE_TO_S_PER_METER
 
@@ -80,7 +80,7 @@ def test_concentric_neutral_cable():
     )
 
     assert_array_almost_equal(
-        calculate_shunt_impedance(model),
+        calculate_concentric_shunt_impedance(model),
         eye(3)*96.6098e-6j * S_PER_MILE_TO_S_PER_METER,
         decimal=9
     )

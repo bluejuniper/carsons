@@ -39,21 +39,26 @@ def calculate_impedance(model) -> ndarray:
 
 # Do I need another version of this fo concentric cables?
 def calculate_shunt_impedance(model) -> ndarray: 
-    dimension = model.dimension
-
-    if isinstance(model, ConcentricNeutralCarsonsEquations):
-        y_primitive = model.build_Y()
-        y_abc = y_primitive[0:dimension, 0:dimension]
-        return y_abc
-
     p_primitive = model.build_shunt_P()
     p_abc = kron(p_primitive)
     c_abc = inv(p_abc)
 
     f = model.f
     y_abc =  2j * π * f * c_abc
-    print(y_abc)
+    
     return y_abc
+
+def calculate_concentric_shunt_impedance(model) -> ndarray:
+    dimension = model.dimension
+    y_primitive = model.build_Y()
+    y_abc = y_primitive[0:dimension, 0:dimension]
+
+    return y_abc
+
+def convert_geometric_model_to_shunt(geometric_model) -> ndarray:
+    carsons_model = CarsonsEquations(geometric_model)
+
+    return calculate_shunt_impedance(carsons_model)
 
 
 def perform_kron_reduction(z_primitive: ndarray, dimension=3) -> ndarray:
