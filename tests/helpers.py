@@ -2,14 +2,17 @@ class LineModel:
     def __init__(self, conductors):
         self._resistance = {}
         self._geometric_mean_radius = {}
+        self._outside_radius = {}
         self._wire_positions = {}
         self._phases = {}
 
         for phase, (r, gmr, (x, y)) in conductors.items():
             self._resistance[phase] = r
             self._geometric_mean_radius[phase] = gmr
+            # self.outside_radius[phase] = d
             self._wire_positions[phase] = (x, y)
             self._phases = sorted(list(conductors.keys()))
+         
 
     @property
     def resistance(self):
@@ -18,6 +21,10 @@ class LineModel:
     @property
     def geometric_mean_radius(self):
         return self._geometric_mean_radius
+
+    @property
+    def outside_radius(self):
+        return self._outside_radius
 
     @property
     def wire_positions(self):
@@ -34,8 +41,8 @@ class ConcentricLineModel:
         self._geometric_mean_radius = {}
         self._wire_positions = {}
         self._phases = {}
-        self.core_diameter = {}
-        self.insulation_relative_permittivity = {}
+        self._outside_radius = {}
+        self._insulation_relative_permittivity = {}
         self._neutral_strand_gmr = {}
         self._neutral_strand_resistance = {}
         self._neutral_strand_diameter = {}
@@ -54,11 +61,11 @@ class ConcentricLineModel:
                 self._geometric_mean_radius[phase] = val['gmr']
                 self._wire_positions[phase] = val['wire_positions']
 
-                if 'diameter' in val:
-                    self.core_diameter[phase] = val['diameter']
+                if 'core_diameter' in val:
+                    self._outside_radius[phase] = val['core_diameter']/2
 
                 if 'insulation_relative_permittivity' in val:
-                    self.insulation_relative_permittivity[phase] = val['insulation_relative_permittivity']                
+                    self._insulation_relative_permittivity[phase] = val['insulation_relative_permittivity']                
 
 
             self._phases = sorted(list(conductors.keys()))
@@ -70,6 +77,10 @@ class ConcentricLineModel:
     @property
     def geometric_mean_radius(self):
         return self._geometric_mean_radius
+
+    @property
+    def outside_radius(self):
+        return self._outside_radius
 
     @property
     def wire_positions(self):
@@ -99,13 +110,17 @@ class ConcentricLineModel:
     def neutral_strand_count(self):
         return self._neutral_strand_count
 
+    @property
+    def insulation_relative_permittivity(self):
+        return self._insulation_relative_permittivity
+
 
 class MultiLineModel:
     def __init__(self, conductors, is_secondary=False):
         self._resistance = {}
         self._geometric_mean_radius = {}
-        self._wire_positions = {}
         self._outside_radius = {}
+        self._wire_positions = {}
 
         for phase, val in conductors.items():
             self._resistance[phase] = val['resistance']

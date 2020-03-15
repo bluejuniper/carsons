@@ -34,6 +34,9 @@ class ABCN_balanced_line():
         }
 
     @property
+    def outside_radius(self): {}
+
+    @property
     def wire_positions(self):
         return {
             'A': (0.762, 8.5344),

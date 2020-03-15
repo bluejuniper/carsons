@@ -120,7 +120,7 @@ class CarsonsEquations():
         self.r: Dict[str, float] = model.resistance
         # use wire_diameter or core_diameter?
         # core_diameter seems more clear for jacketed conductors
-        self.core_diameter: Dict[str, float] = model.core_diameter
+        self.outside_radius: Dict[str, float] = model.outside_radius
 
         self.ƒ = getattr(model, 'frequency', 60)
         self.ω = 2.0 * π * self.ƒ  # angular frequency radians / second
@@ -282,7 +282,7 @@ class CarsonsEquations():
     def compute_shunt_P(self, i, j):
         if i == j:
             Sii = 2 * self.get_h(i)
-            RDi = self.core_diameter[i]/2
+            RDi = self.outside_radius[i]
             return log(Sii/RDi)
         
         Sij = self.calculate_image_d(i, j)
@@ -321,7 +321,6 @@ class ConcentricNeutralCarsonsEquations(ModifiedCarsonsEquations):
 
     def __init__(self, model, *args, **kwargs):
         super().__init__(model)
-        self.core_diameter: Dict[str, float] = model.core_diameter
         self.insulation_relative_permittivity: Dict[str, float] = model.insulation_relative_permittivity
         self.neutral_strand_gmr: Dict[str, float] = model.neutral_strand_gmr
         self.neutral_strand_diameter: Dict[str, float] = model.neutral_strand_diameter
@@ -405,7 +404,7 @@ class ConcentricNeutralCarsonsEquations(ModifiedCarsonsEquations):
 
 
     def compute_C(self, phase):
-        RDi = self.core_diameter[phase]/2 # radius of the center conductor in ft
+        RDi = self.outside_radius[phase] # radius of the center conductor in ft
 
         # enable this when tape shielding gets merged in
         if False and self.tape_thickness:

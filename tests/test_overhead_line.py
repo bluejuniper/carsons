@@ -17,6 +17,7 @@ class ACBN_geometry_line():
 
     def __init__(self, ƒ=60):
         self.frequency = ƒ
+        self.outside_radius = {}
 
     @property
     def resistance(self):
@@ -76,6 +77,7 @@ class CBN_geometry_line():
 
     def __init__(self, ƒ=60):
         self.frequency = ƒ
+        self.outside_radius = {}        
 
     @property
     def resistance(self):
@@ -131,6 +133,7 @@ class CN_geometry_line():
 
     def __init__(self, ƒ=60):
         self.frequency = ƒ
+        self.outside_radius = {}        
 
     @property
     def resistance(self):

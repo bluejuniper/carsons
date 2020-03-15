@@ -21,6 +21,8 @@ def test_compatibility_with_dict_of_phases():
                 "N": 0.00248107,
             }
 
+            self.outside_radius = {}
+
             self.wire_positions = {
                 "A": (0.762, 8.5344),
                 "C": (2.1336, 8.5344),
