@@ -37,14 +37,12 @@ def calculate_impedance(model) -> ndarray:
 
     return z_abc
 
-# Do I need another version of this fo concentric cables?
+# Do I need another version of this for concentric cables?
 def calculate_shunt_impedance(model) -> ndarray: 
-    p_primitive = model.build_shunt_P()
-    p_abc = kron(p_primitive)
+    p_primitive = model.build_P()
+    p_abc = perform_kron_reduction(p_primitive)
     c_abc = inv(p_abc)
-
-    f = model.f
-    y_abc =  2j * π * f * c_abc
+    y_abc =  1j * model.ω * c_abc
     
     return y_abc
 
@@ -290,7 +288,7 @@ class CarsonsEquations():
             RDi = self.outside_radius[i]
             return log(Sii/RDi)
         
-        Sij = self.calculate_image_d(i, j)
+        Sij = self.compute_image_d(i, j)
         Dij = 2 * self.get_h(i)
         return log(Sij/Dij)
 

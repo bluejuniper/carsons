@@ -77,7 +77,7 @@ def ACBN_line_phase_impedance_60Hz():
 
 def ACBN_line_shunt_impedance_60Hz():
     """ IEEE 13 Configuration 601 Shunt Impedance Solution At 60Hz """
-    return 1j * S_PER_MILE_TO_S_PER_METER * array([
+    return 1e-6j * S_PER_MILE_TO_S_PER_METER * array([
             [6.2998,  -1.9958, -1.2595],
             [-1.9958,  5.9597, -0.7417],
             [-1.2595, -0.7417,  5.6386]])
@@ -214,11 +214,11 @@ def test_converts_geometry_to_phase_impedance(
                               actual_impedance)
 
 
-# def test_converts_geometry_to_shunt_impedance():
-#     model = ACBN_geometry_line()
+def test_converts_geometry_to_shunt_impedance():
+    model = ACBN_geometry_line()
 
-#     assert_array_almost_equal(
-#         convert_geometric_model_to_shunt(model),
-#         ACBN_line_shunt_impedance_60Hz(),
-#         decimal=9
-#     )
+    assert_array_almost_equal(
+        convert_geometric_model_to_shunt(model),
+        ACBN_line_shunt_impedance_60Hz(),
+        decimal=9
+    )
