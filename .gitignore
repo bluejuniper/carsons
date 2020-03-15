@@ -4,3 +4,4 @@
 
 .coverage
 carsons.code-workspace
+/carsons.egg-info/*
