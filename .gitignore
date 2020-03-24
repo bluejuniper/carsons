@@ -1,6 +1,6 @@
 .pytest_cache/
 .mypy_cache/
 */__pycache__/
-
+/carsons.egg-info/*
 .coverage
 carsons.code-workspace
