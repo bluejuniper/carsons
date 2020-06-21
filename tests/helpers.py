@@ -12,7 +12,6 @@ class LineModel:
             # self.outside_radius[phase] = d
             self._wire_positions[phase] = (x, y)
             self._phases = sorted(list(conductors.keys()))
-         
 
     @property
     def resistance(self):
@@ -65,8 +64,8 @@ class ConcentricLineModel:
                     self._outside_radius[phase] = val['core_diameter']/2
 
                 if 'insulation_relative_permittivity' in val:
-                    self._insulation_relative_permittivity[phase] = val['insulation_relative_permittivity']                
-
+                    self._insulation_relative_permittivity[phase] \
+                        = val['insulation_relative_permittivity']
 
             self._phases = sorted(list(conductors.keys()))
 

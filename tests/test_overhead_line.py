@@ -1,14 +1,16 @@
 import pytest
 from numpy.testing import assert_array_almost_equal
 from numpy import array
-from carsons.carsons import convert_geometric_model, convert_geometric_model_to_shunt
+from carsons.carsons import convert_geometric_model, \
+    convert_geometric_model_to_shunt
+
 
 # `carsons` implements the model entirely in SI metric units, however this
 # conversion allows us to enter in impedance as ohm-per-mile in the test
 # harness, which means we can lift matrices directly out of the ieee test
 # networks.
 OHM_PER_MILE_TO_OHM_PER_METER = 1 / 1_609.344
-S_PER_MILE_TO_S_PER_METER = OHM_PER_MILE_TO_OHM_PER_METER 
+S_PER_MILE_TO_S_PER_METER = OHM_PER_MILE_TO_OHM_PER_METER
 OHM_PER_KILOMETER_TO_OHM_PER_METER = 1 / 1_000
 
 
@@ -96,7 +98,7 @@ class CBN_geometry_line():
 
     def __init__(self, ƒ=60):
         self.frequency = ƒ
-        self.outside_radius = {}        
+        self.outside_radius = {}
 
     @property
     def resistance(self):
@@ -152,7 +154,7 @@ class CN_geometry_line():
 
     def __init__(self, ƒ=60):
         self.frequency = ƒ
-        self.outside_radius = {}        
+        self.outside_radius = {}
 
     @property
     def resistance(self):
