@@ -134,6 +134,7 @@ class CarsonsEquations():
     def compute_R(self, i, j) -> float:
         rᵢ = self.r[i]
         ΔR = self.μ * self.ω / π * self.compute_P(i, j)
+        print(f"rᵢ[{i},{j}] = {rᵢ}, ΔR[{i},{j}] = {ΔR}")
 
         if i == j:
             return rᵢ + ΔR
@@ -395,15 +396,14 @@ class MultiConductorCarsonsEquations(ModifiedCarsonsEquations):
 
     @property
     def conductors(self):
+        phase_conductors = sorted([
+            ph for ph in self.phases if not ph.startswith("N")
+        ])
         neutral_conductors = sorted([
             ph for ph in self.phases if ph.startswith("N")
         ])
-        if self.is_secondary:
-            conductors = ["S1", "S2"] + neutral_conductors
-        else:
-            conductors = ["A", "B", "C"] + neutral_conductors
 
-        return conductors
+        return phase_conductors + neutral_conductors
 
     @property
     def is_secondary(self):
