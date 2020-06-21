@@ -7,6 +7,7 @@ from numpy import array, ndarray
 from numpy import pi as π
 from numpy.linalg import inv
 
+epsilon_0 = 8.85418782e-12 # perimittivity of free space
 alpha = exp(2j*π/3)
 
 A = array([
@@ -35,6 +36,14 @@ def calculate_impedance(model) -> ndarray:
     z_abc = perform_kron_reduction(z_primitive, dimension=model.dimension)
 
     return z_abc
+
+def calculate_shunt_impedance(model) -> ndarray: 
+    dimension = model.dimension
+    y_primitive = model.build_Y()
+    y_abc = y_primitive[0:dimension, 0:dimension]
+
+    print(y_abc)
+    return y_abc
 
 
 def perform_kron_reduction(z_primitive: ndarray, dimension=3) -> ndarray:
@@ -110,6 +119,11 @@ class CarsonsEquations():
             model.wire_positions
         self.gmr: Dict[str, float] = model.geometric_mean_radius
         self.r: Dict[str, float] = model.resistance
+
+        if hasattr(model, 'outside_radius'):
+            self.outside_radius: Dict[str, float] = model.outside_radius
+        else:
+            self.outside_radius: {}
 
         self.ƒ = getattr(model, 'frequency', 60)
         self.ω = 2.0 * π * self.ƒ  # angular frequency radians / second
@@ -261,9 +275,14 @@ class ModifiedCarsonsEquations(CarsonsEquations):
 
 
 class ConcentricNeutralCarsonsEquations(ModifiedCarsonsEquations):
+
     def __init__(self, model, *args, **kwargs):
         super().__init__(model)
+        self.core_diameter: Dict[str, float] = model.core_diameter
+        self.insulation_relative_permittivity: Dict[str, float] = model.insulation_relative_permittivity
         self.neutral_strand_gmr: Dict[str, float] = model.neutral_strand_gmr
+        self.neutral_strand_diameter: Dict[str, float] = model.neutral_strand_diameter
+        self.diameter_over_neutral: Dict[str, float] = model.diameter_over_neutral
         self.neutral_strand_count: Dict[str, float] = defaultdict(
             lambda: None,
             model.neutral_strand_count
@@ -322,10 +341,60 @@ class ConcentricNeutralCarsonsEquations(ModifiedCarsonsEquations):
         return (GMR_s * k * R**(k-1))**(1/k)
 
 
+    def build_Y(self) -> ndarray:
+        dimension = len(self.conductors)
+        Y = zeros(shape=(dimension, dimension), dtype=complex)
+
+        for index_i, phase_i in enumerate(self.conductors):
+            if phase_i not in self.phases:
+                continue
+
+            if phase_i.startswith('N'):
+                C = 0
+            else:
+                C = self.compute_C(phase_i)
+            
+            print(f'C[{phase_i}] = {C}')
+            Y[index_i, index_i] = 1j*self.ω*C
+
+        # print(Y)
+        return Y       
+
+
+    def compute_C(self, phase):
+        RDi = self.core_diameter[phase]/2 # radius of the center conductor in ft
+
+        # enable this when tape shielding gets merged in
+        if False and self.tape_thickness:
+            D_outer = self.diameter_over_neutral[f'N{phase}']
+            T = self.tape_thickness[phase]
+            Rb = (D_outer/2 - T/2)
+            
+            return 2*π*epsilon/log(Rb/RDi) # Siemens/mile with feet input
+
+        k = self.neutral_strand_count[f'N{phase}']
+
+        # diameter of neutral strands in in.
+        # this is D_strand in underground_line()
+        RDs = self.neutral_strand_diameter[f'N{phase}']/2 
+    
+        # distance from cable center to neutral strand centers
+        # this is R_strand in underground_line()
+        Rb = self.radius[f'N{phase}']
+
+        print( self.insulation_relative_permittivity)
+        epsilon_r = self.insulation_relative_permittivity[phase] # TODO: add this is a parameter 
+        epsilon = epsilon_0*epsilon_r
+
+        return 2*π*epsilon/(log(Rb/RDi) - log(k*RDs/Rb)/k) # C/m
+
+
+                    
+
+
 class MultiConductorCarsonsEquations(ModifiedCarsonsEquations):
     def __init__(self, model):
         super().__init__(model)
-        self.outside_radius: Dict[str, float] = model.outside_radius
 
     def compute_d(self, i, j) -> float:
         # Assumptions:

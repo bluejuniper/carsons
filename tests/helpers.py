@@ -34,6 +34,8 @@ class ConcentricLineModel:
         self._geometric_mean_radius = {}
         self._wire_positions = {}
         self._phases = {}
+        self.core_diameter = {}
+        self.insulation_relative_permittivity = {}
         self._neutral_strand_gmr = {}
         self._neutral_strand_resistance = {}
         self._neutral_strand_diameter = {}
@@ -51,6 +53,14 @@ class ConcentricLineModel:
                 self._resistance[phase] = val['resistance']
                 self._geometric_mean_radius[phase] = val['gmr']
                 self._wire_positions[phase] = val['wire_positions']
+
+                if 'diameter' in val:
+                    self.core_diameter[phase] = val['diameter']
+
+                if 'insulation_relative_permittivity' in val:
+                    self.insulation_relative_permittivity[phase] = val['insulation_relative_permittivity']                
+
+
             self._phases = sorted(list(conductors.keys()))
 
     @property

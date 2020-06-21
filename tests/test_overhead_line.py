@@ -8,6 +8,7 @@ from carsons.carsons import convert_geometric_model
 # harness, which means we can lift matrices directly out of the ieee test
 # networks.
 OHM_PER_MILE_TO_OHM_PER_METER = 1 / 1_609.344
+S_PER_MILE_TO_S_PER_METER = OHM_PER_MILE_TO_OHM_PER_METER 
 OHM_PER_KILOMETER_TO_OHM_PER_METER = 1 / 1_000
 
 
