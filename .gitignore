@@ -5,3 +5,5 @@
 .coverage
 carsons.code-workspace
 /carsons.egg-info/*
+.DS_Store
+carsons/carsons_master.py

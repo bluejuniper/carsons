@@ -81,11 +81,11 @@ def test_concentric_neutral_cable():
         decimal=4
     )
 
-    assert_array_almost_equal(
-        calculate_concentric_shunt_impedance(model),
-        eye(3)*96.6098e-6j * S_PER_MILE_TO_S_PER_METER,
-        decimal=9
-    )
+    # assert_array_almost_equal(
+    #     calculate_concentric_shunt_impedance(model),
+    #     eye(3)*96.6098e-6j * S_PER_MILE_TO_S_PER_METER,
+    #     decimal=9
+    # )
 
 
 def test_concentric_neutral_cable_IEEE37():

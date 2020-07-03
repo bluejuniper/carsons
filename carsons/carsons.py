@@ -124,7 +124,7 @@ class CarsonsEquations():
             model.wire_positions
         self.gmr: Dict[str, float] = model.geometric_mean_radius
         self.r: Dict[str, float] = model.resistance
-        self.epsilon_r[str, float] = model.insulation_relative_permittivity
+        self.epsilon_r: Dict[str, float] = [1.0]*len(model.phases)
         # use wire_diameter or core_diameter?
         # core_diameter seems more clear for jacketed conductors
         self.outside_radius: Dict[str, float] = model.outside_radius
@@ -284,14 +284,16 @@ class CarsonsEquations():
         return p_primitive
 
     def compute_shunt_P(self, i, j):
+        epsilon = epsilon_0  # only handle air dielectric for now
+
         if i == j:
             Sii = 2 * self.get_h(i)
             RDi = self.outside_radius[i]
-            return log(Sii/RDi)
+            return log(Sii/RDi)/(2*π*epsilon)  # units of F/m
 
         Sij = self.compute_image_d(i, j)
         Dij = 2 * self.get_h(i)
-        return log(Sij/Dij)
+        return log(Sij/Dij)/(2*π*epsilon)  # units of F/m
 
 
 class ModifiedCarsonsEquations(CarsonsEquations):
